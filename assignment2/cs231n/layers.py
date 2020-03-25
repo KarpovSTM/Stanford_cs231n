@@ -19,6 +19,24 @@ def affine_forward(x, w, b):
     Returns a tuple of:
     - out: output, of shape (N, M)
     - cache: (x, w, b)
+
+
+    Вычисляет прямой проход для аффинного (полностью связного) слоя.
+
+    Вход x имеет форму (N, d_1, ..., d_k) и содержит мини-пакет из N примеров,
+    где каждый пример x [i] имеет форму (d_1, ..., d_k).
+    Мы преобразуем каждый вход в вектор измерения D = d_1 * ... * d_k,
+    а затем преобразуем его в выходной вектор измерения M.
+
+    Входы:
+    - x: пустой массив, содержащий входные данные, формы (N, d_1, ..., d_k)
+    - w: бесчисленное множество весов формы (D, M)
+    - b: бесчисленное множество отклонений формы (M,)
+
+    Возвращает кортеж из:
+    - out: выход формы (N, M)
+    - кеш: (х, ш, б)
+
     """
     out = None
     ###########################################################################
@@ -27,7 +45,9 @@ def affine_forward(x, w, b):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # f= x*w + b / x*w = вероятность
+
+    out = x.reshape(x.shape[0], w.shape[0]).dot(w) + b
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -159,6 +179,43 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     Returns a tuple of:
     - out: of shape (N, D)
     - cache: A tuple of values needed in the backward pass
+
+    Прямой пропуск для нормализации партии.
+
+    Во время обучения среднее значение выборки и (нескорректированная) выборочная дисперсия
+    вычисляется по статистике минибата и используется для нормализации входящих данных.
+    Во время обучения мы также сохраняем экспоненциально убывающую скользящую среднюю
+    среднее значение и дисперсия каждого признака, и эти средние значения используются для нормализации
+    данные во время теста.
+
+    На каждом временном шаге мы обновляем текущие средние для среднего и дисперсии, используя
+    экспоненциальный спад на основе параметра импульса:
+
+    running_mean = импульс * running_mean + (1 - импульс) * sample_mean
+    running_var = импульс * running_var + (1 - импульс) * sample_var
+
+    Обратите внимание, что документ нормализации партии предлагает другое время испытаний
+    поведение: они вычисляют среднее значение выборки и дисперсию для каждого объекта, используя
+    большое количество тренировочных образов, а не с использованием скользящего среднего. За
+    эта реализация мы решили использовать скользящие средние, так как
+    они не требуют дополнительного шага оценки; факел7
+    Реализация нормализации партии также использует скользящие средние.
+
+    Входные данные:
+    - x: данные формы (N, D)
+    - гамма: масштабный параметр формы (D,)
+    - бета: сдвиговый параметр формы (D,)
+    - bn_param: словарь со следующими ключами:
+      - режим: «поезд» или «тест»; требуется
+      - eps: константа для числовой стабильности
+      - импульс: постоянная для скользящего среднего / дисперсии.
+      - running_mean: массив формы (D,), дающий среднее значение функций
+      - running_var Массив формы (D,), дающий бегущую дисперсию функций
+
+    Возвращает кортеж из:
+    - вне: формы (N, D)
+    - кеш: кортеж значений, необходимых при обратном проходе
+
     """
     mode = bn_param['mode']
     eps = bn_param.get('eps', 1e-5)
@@ -187,13 +244,83 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         #                                                                     #
         # Note that though you should be keeping track of the running         #
         # variance, you should normalize the data based on the standard       #
-        # deviation (square root of variance) instead!                        # 
+        # deviation (square root of variance) instead!                        #
         # Referencing the original paper (https://arxiv.org/abs/1502.03167)   #
         # might prove to be helpful.                                          #
+        """
+        ТОДО: Внедрение прямого прохода времени обучения для нормы партии. #
+        # Используйте статистику минибата для вычисления среднего значения и дисперсии, используйте #
+        # эта статистика для нормализации входящих данных, а также масштаб и #
+        # сдвиг нормализованных данных с использованием гаммы и бета. #
+        # #
+        # Вы должны сохранить вывод в переменной out. Любые промежуточные звенья
+        # что нужно для обратного прохода должно храниться в кеше #
+        # переменная. #
+        # #
+        Вы должны также использовать ваше среднее значение выборки и дисперсию вместе
+        # с переменной количества движения для обновления среднего значения и работы #
+        # дисперсия, сохранение вашего результата в running_mean и running_var #
+        # переменные. #
+        # #
+        # Обратите внимание, что хотя вы должны следить за бегом #
+        # дисперсия, вы должны нормализовать данные на основе стандарта #
+        # отклонение (квадратный корень из дисперсии) вместо этого! #
+        # Ссылка на оригинал статьи (https://arxiv.org/abs/1502.03167) #
+        # может оказаться полезным. #
+        """
+
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # https://arxiv.org/pdf/1502.03167.pdf          page 3
+        #
+        """
+        Понимание в соответствие с таблицей из статьи.
+
+        # mini-batch mean
+        u = 1./N * np.sum(x, axis = 0)
+
+        # mini-batch variance
+        var = 1./N * np.sum(((x - u)**2), axis = 0)
+
+        # normalized
+        y = (x - u)/(np.sqrt(var + eps))
+
+        # scale and shift
+        out = gamma*y + beta
+
+        cache = (y,gamma,var,eps)
+        """
+        # Разложим на шаги
+
+        # шаг 1 расчет среднего значения
+        mu = 1./N * np.sum(x, axis = 0)
+
+        # шаг 2 вычитаем среднее значение из всех
+        xmu = x - mu
+
+        # шаг 3
+        sqr = xmu ** 2
+
+        # шаг 4 расчет дисперсии
+        dispersia = 1./N * np.sum(sqr, axis = 0)
+
+        # шаг 5
+        sqrt_dis = np.sqrt(dispersia + eps)
+
+        # шаг 6
+        invert = 1./sqrt_dis
+
+        # шаг 7 нормализацией
+        xhat = xmu * invert
+
+        # шаг 8
+        gammax = gamma * xhat
+
+        # шаг 9
+        out = gammax + beta
+
+        cache = (xhat,gamma,xmu,invert,sqrt_dis,dispersia,eps)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -240,6 +367,20 @@ def batchnorm_backward(dout, cache):
     - dx: Gradient with respect to inputs x, of shape (N, D)
     - dgamma: Gradient with respect to scale parameter gamma, of shape (D,)
     - dbeta: Gradient with respect to shift parameter beta, of shape (D,)
+
+    Обратный проход для нормализации партии.
+
+     Для этой реализации вы должны выписать граф вычислений для пакетной нормализации
+    на бумаге и распространять градиенты в обратном направлении через промежуточные узлы.
+
+     Входы:
+     - dout: восходящие производные формы (N, D)
+     - кеш: переменная промежуточных звеньев от batchnorm_forward.
+
+     Возвращает кортеж из:
+     - dx: градиент относительно входов x формы (N, D)
+     - dgamma: градиент по гамма-параметру масштаба, формы (D,)
+     - dbeta: градиент относительно параметра смещения бета формы (D,)
     """
     dx, dgamma, dbeta = None, None, None
     ###########################################################################
@@ -250,7 +391,44 @@ def batchnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    xhat,gamma,xmu,invert,sqrt_dis,dispersia,eps = cache
+
+    # размеры ввода \ вывода
+    N,D = dout.shape
+
+    # шаг 9
+    dbeta = np.sum(dout, axis=0)
+    dgammax = dout #not necessary, but more understandable
+
+    # шаг 8
+    dgamma = np.sum(dgammax*xhat, axis=0)
+    dxhat = dgammax * gamma
+
+    # шаг 7
+    divar = np.sum(dxhat*xmu, axis=0)
+    dxmu1 = dxhat * invert
+
+    # шаг 6
+    dsqrtvar = -1. /(sqrt_dis**2) * divar
+
+    # шаг 5
+    ddis = 0.5 * 1. /np.sqrt(dispersia+eps) * dsqrtvar
+
+    # шаг 4
+    dsq = 1. /N * np.ones((N,D)) * ddis
+
+    # шаг 3
+    dxmu2 = 2 * xmu * dsq
+
+    # шаг 2
+    dx1 = (dxmu1 + dxmu2)
+    dmu = -1 * np.sum(dxmu1+dxmu2, axis=0)
+
+    # шаг 1
+    dx2 = 1. /N * np.ones((N,D)) * dmu
+
+    # шаг 0
+    dx = dx1 + dx2
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -266,13 +444,26 @@ def batchnorm_backward_alt(dout, cache):
 
     For this implementation you should work out the derivatives for the batch
     normalizaton backward pass on paper and simplify as much as possible. You
-    should be able to derive a simple expression for the backward pass. 
+    should be able to derive a simple expression for the backward pass.
     See the jupyter notebook for more hints.
-     
+
     Note: This implementation should expect to receive the same cache variable
     as batchnorm_backward, but might not use all of the values in the cache.
 
     Inputs / outputs: Same as batchnorm_backward
+
+    Альтернативный обратный проход для нормализации партии.
+
+     Для этой реализации вы должны разработать производные для партии
+     Нормализовать задом наперед на бумаге и максимально упростить. Вы
+     должен быть в состоянии получить простое выражение для обратного прохода.
+     См. Блокнот Jupyter для большего количества подсказок.
+
+     Примечание: эта реализация должна ожидать получения той же переменной кэша
+     как batchnorm_backward, но может не использовать все значения в кэше.
+
+     Входы / выходы: такие же, как у batchnorm_backward
+
     """
     dx, dgamma, dbeta = None, None, None
     ###########################################################################
@@ -282,6 +473,14 @@ def batchnorm_backward_alt(dout, cache):
     # After computing the gradient with respect to the centered inputs, you   #
     # should be able to compute gradients with respect to the inputs in a     #
     # single statement; our implementation fits on a single 80-character line.#
+
+    """
+    # TODO: Реализация обратного прохода для нормализации партии.
+    Сохраните результаты в переменных dx, dgamma и dbeta.
+    # После вычисления градиента относительно центрированных входов
+    вы должны быть в состоянии вычислить градиенты относительно входов в одном выражении;
+    наша реализация помещается в одну строку из 80 символов.
+    """
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -301,7 +500,7 @@ def layernorm_forward(x, gamma, beta, ln_param):
 
     During both training and test-time, the incoming data is normalized per data-point,
     before being scaled by gamma and beta parameters identical to that of batch normalization.
-    
+
     Note that in contrast to batch normalization, the behavior during train and test-time for
     layer normalization are identical, and we do not need to keep track of running averages
     of any sort.
@@ -484,8 +683,8 @@ def conv_forward_naive(x, w, b, conv_param):
     - conv_param: A dictionary with the following keys:
       - 'stride': The number of pixels between adjacent receptive fields in the
         horizontal and vertical directions.
-      - 'pad': The number of pixels that will be used to zero-pad the input. 
-        
+      - 'pad': The number of pixels that will be used to zero-pad the input.
+
 
     During padding, 'pad' zeros should be placed symmetrically (i.e equally on both sides)
     along the height and width axes of the input. Be careful not to modfiy the original
@@ -553,7 +752,7 @@ def max_pool_forward_naive(x, pool_param):
       - 'pool_width': The width of each pooling region
       - 'stride': The distance between adjacent pooling regions
 
-    No padding is necessary here. Output size is given by 
+    No padding is necessary here. Output size is given by
 
     Returns a tuple of:
     - out: Output data, of shape (N, C, H', W') where H' and W' are given by
@@ -683,7 +882,7 @@ def spatial_batchnorm_backward(dout, cache):
 def spatial_groupnorm_forward(x, gamma, beta, G, gn_param):
     """
     Computes the forward pass for spatial group normalization.
-    In contrast to layer normalization, group normalization splits each entry 
+    In contrast to layer normalization, group normalization splits each entry
     in the data into G contiguous pieces, which it then normalizes independently.
     Per feature shifting and scaling are then applied to the data, in a manner identical to that of batch normalization and layer normalization.
 
@@ -706,7 +905,7 @@ def spatial_groupnorm_forward(x, gamma, beta, G, gn_param):
     # This will be extremely similar to the layer norm implementation.        #
     # In particular, think about how you could transform the matrix so that   #
     # the bulk of the code is similar to both train-time batch normalization  #
-    # and layer normalization!                                                # 
+    # and layer normalization!                                                #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
