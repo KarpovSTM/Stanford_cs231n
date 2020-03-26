@@ -320,7 +320,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # шаг 9
         out = gammax + beta
 
-        cache = (xhat,gamma,xmu,invert,sqrt_dis,dispersia,eps)
+        cache = (xhat,gamma,xmu,mu,invert,sqrt_dis,dispersia,eps,x)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -391,7 +391,7 @@ def batchnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    xhat,gamma,xmu,invert,sqrt_dis,dispersia,eps = cache
+    xhat,gamma,xmu,mu,invert,sqrt_dis,dispersia,eps,x = cache
 
     # размеры ввода \ вывода
     N,D = dout.shape
@@ -454,7 +454,7 @@ def batchnorm_backward_alt(dout, cache):
 
     Альтернативный обратный проход для нормализации партии.
 
-     Для этой реализации вы должны разработать производные для партии
+     Для этой реализации вы должны разработать производные для батча
      Нормализовать задом наперед на бумаге и максимально упростить. Вы
      должен быть в состоянии получить простое выражение для обратного прохода.
      См. Блокнот Jupyter для большего количества подсказок.
@@ -484,7 +484,15 @@ def batchnorm_backward_alt(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    xhat,gamma,xmu,mu,invert,sqrt_dis,dispersia,eps,x = cache
+
+    N, D = dout.shape
+    
+    dbeta = np.sum(dout, axis=0)
+    dgamma = np.sum((x - mu) * (dispersia + eps)**(-1. / 2.) * dout, axis=0)
+
+    dx = (1. / N) * gamma * (dispersia + eps)**(-1. / 2.) * (N * dout - np.sum(dout, axis=0)
+        - (x - mu) * (dispersia + eps)**(-1.0) * np.sum(dout * (x - mu), axis=0))
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
