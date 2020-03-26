@@ -1,7 +1,6 @@
 from builtins import range
 import numpy as np
 
-
 def affine_forward(x, w, b):
     """
     Computes the forward pass for an affine (fully-connected) layer.
@@ -45,7 +44,11 @@ def affine_forward(x, w, b):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    # f= x*w + b / x*w = вероятность
+    # f= x*w + b |||||||| x*w = вероятность
+
+    # out = N x M; X= N x D; w= D x M; b = 1 x M
+
+    # x.shape[0]) и w.shape[0]) # кол-во строк
 
     out = x.reshape(x.shape[0], w.shape[0]).dot(w) + b
 
@@ -72,6 +75,20 @@ def affine_backward(dout, cache):
     - dx: Gradient with respect to x, of shape (N, d1, ..., d_k)
     - dw: Gradient with respect to w, of shape (D, M)
     - db: Gradient with respect to b, of shape (M,)
+
+     Вычисляет обратный проход для аффинного слоя.
+
+     Входы:
+     - dout: восходящая производная формы (N, M)
+     - кеш: кортеж из:
+       - x: входные данные формы (N, d_1, ... d_k)
+       - w: веса, формы (D, M)
+       - b: уклоны формы (M,)
+
+     Возвращает кортеж из:
+     - dx: градиент по x, формы (N, d1, ..., d_k)
+     - dw: градиент относительно w формы (D, M)
+     - db: градиент относительно b формы (M,)
     """
     x, w, b = cache
     dx, dw, db = None, None, None
@@ -80,7 +97,13 @@ def affine_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # out = N x M; X= N x D; w= D x M; b = 1 x M
+    # dout
+
+    dx = np.dot(dout, w.T).reshape(x.shape)
+    dw = np.dot(x.reshape(x.shape[0], np.prod(x.shape[1:])).T, dout)
+    db = np.sum(dout, axis=0)
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -106,7 +129,7 @@ def relu_forward(x):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    out = np.maximum(0, x)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -133,7 +156,8 @@ def relu_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    dx = np.array(dout, copy=True)
+    dx[x <= 0] = 0
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -487,7 +511,7 @@ def batchnorm_backward_alt(dout, cache):
     xhat,gamma,xmu,mu,invert,sqrt_dis,dispersia,eps,x = cache
 
     N, D = dout.shape
-    
+
     dbeta = np.sum(dout, axis=0)
     dgamma = np.sum((x - mu) * (dispersia + eps)**(-1. / 2.) * dout, axis=0)
 
