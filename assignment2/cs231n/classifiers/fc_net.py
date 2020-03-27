@@ -34,6 +34,14 @@ class TwoLayerNet(object):
         - weight_scale: Scalar giving the standard deviation for random
           initialization of the weights.
         - reg: Scalar giving L2 regularization strength.
+
+         - input_dim: целое число, определяющее размер ввода
+         - hidden_dim: целое число, определяющее размер скрытого слоя
+         - num_classes: целое число, указывающее количество классов для классификации
+         - weight_scale: скаляр, дающий стандартное отклонение для случайного
+           инициализация весов.
+         - reg: Скаляр, дающий силу регуляризации L2.
+
         """
         self.params = {}
         self.reg = reg
@@ -46,11 +54,26 @@ class TwoLayerNet(object):
         # dictionary self.params, with first layer weights                         #
         # and biases using the keys 'W1' and 'b1' and second layer                 #
         # weights and biases using the keys 'W2' and 'b2'.                         #
+        """
+         # TODO: Инициализировать веса и смещения двухслойной сетки. Веса #
+         # должен быть инициализирован из гауссов с центром в 0.0 с #
+         # стандартное отклонение равно weight_scale, а смещения должны быть #
+         # инициализируется до нуля. Все веса и уклоны должны храниться в #
+         # словарь self.params, с весами первого слоя #
+         # и смещения с использованием клавиш 'W1' и 'b1' и второго слоя #
+         # весит и смещает, используя ключи 'W2' и 'b2'.
+        """
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        self.In_dim = input_dim
 
-        pass
+        self.params['W1'] = weight_scale * np.random.randn(input_dim, hidden_dim)
+        self.params['b1'] = np.zeros(hidden_dim)
 
+        self.params['W2'] = weight_scale * np.random.randn(input_dim, hidden_dim)
+        self.params['b2'] = np.zeros(num_classes)
+
+        #self.params.update({'W1': W1, 'b1': b1, 'W2': W2, 'b2': b2})
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -75,15 +98,47 @@ class TwoLayerNet(object):
         - loss: Scalar value giving the loss
         - grads: Dictionary with the same keys as self.params, mapping parameter
           names to gradients of the loss with respect to those parameters.
+
+
+        Вычислить потери и градиент для мини-пакета данных.
+
+        Входы:
+        - X: массив входных данных формы (N, d_1, ..., d_k)
+        - y: массив меток формы (N,). y [i] дает метку для X [i].
+
+        Возвращает:
+        Если y - Нет, запустите прямой прогон модели во время тестирования и верните:
+        - баллы: массив формы (N, C), дающий классификационные баллы, где
+        очки [i, c] - классификационная оценка для X [i] и класса c.
+
+        Если y не None, тогда выполните проход вперед и назад во время тренировки и верните кортеж:
+        - потеря: скалярное значение, дающее убыток
+        - grads: словарь с теми же ключами, что и self.params, отображающий имена параметров в градиенты потерь по этим параметрам.
         """
         scores = None
         ############################################################################
         # TODO: Implement the forward pass for the two-layer net, computing the    #
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
+
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        input_dim = self.In_dim
+        W1, b1 = self.params['W1'], self.params['b1']
+        W2, b2 = self.params['W2'], self.params['b2']
+
+        #N, D = X.shape
+
+        reg =  self.reg
+
+        X = X.reshape(X.shape[0], input_dim)
+
+        # Первый слой
+        hidden_layer, cache_hidden_layer = affine_relu_forward(X, W1, b1)
+
+        # Второй слой
+        scores, cache_scores = affine_forward(hidden_layer, W2, b2)
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -105,11 +160,26 @@ class TwoLayerNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # data_loss - потери классификатора softmax
+        data_loss, dscores = softmax_loss(scores, y)
 
-        # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        # добавляем регуляризацию
+        loss = data_loss + 0.5 *( self.reg * np.sum(W1**2) + self.reg * np.sum(W2**2))
+
+        # Второй слой
+        dx1, dW2, db2 = affine_backward(dscores, cache_scores)
+        dW2 += self.reg * W2
+
+        # Первый слой
+        dx, dW1, db1 = affine_relu_backward(dx1, cache_hidden_layer)
+        dW1 += self.reg * W1
+
+        # обновление словаря
+        grads.update({'W1': dW1, 'b1': db1, 'W2': dW2, 'b2': db2})
+
+    # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
