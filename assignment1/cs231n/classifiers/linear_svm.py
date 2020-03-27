@@ -59,16 +59,16 @@ def svm_loss_naive(W, X, y, reg):
             margin = scores[j] - correct_class_score + 1 # note delta = 1
             if margin > 0:
 
-# *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    # ТУТ ЖОСКА
-    #http://cs231n.github.io/optimization-1/#analytic
-
-    # false_count подсчитываем количество классов, которые не достигли требуемого margin (и, следовательно, внесли свой вклад в функцию потерь)
+    # http://cs231n.github.io/optimization-1/#analytic
+    # false_count подсчитываем количество классов, которые не достигли требуемого margin
+    # и, следовательно, внесли свой вклад в функцию потерь
               false_count = false_count + 1
               dW[:, j] = dW[:, j] + X[i] # обновление градиента для ложных классов
               loss = loss + margin
-    # обновление градиента для истинных см условие if j == y[i]:
+
+        # обновление градиента для весов истинного класса
         dW[:, y[i]] = dW[:, y[i]] - false_count * X[i]
 
     # вычислим среднюю ошибку и градиент по всем
@@ -132,45 +132,16 @@ def svm_loss_vectorized(W, X, y, reg):
     delta = 1.0
     scores = X.dot(W) # вероятности размером 10 х 1 за каждый класс
 
-    # сохраняем вероятность истинного класса для каждого пикселя в вектор
+    # вычисляем вероятность истинного класса для каждого пикселя в вектор
     correct_class_score = scores[np.arange(num_train), y]
-    correct_class_score = correct_class_score[:, np.newaxis]
+    correct_class_score = correct_class_score[:, np.newaxis] # в 1 столбец
 
     margins = np.maximum(0, scores - correct_class_score + delta)
-    margins[np.arange(num_train), y] = 0 # все ячейки отображающие правильный класс =0
+    margins[np.arange(num_train), y] = 0 # все ячейки отображающие правильный класс = 0
 
-    loss = np.sum(margins)
-
-    loss /= num_train
+    loss = np.sum(margins) / num_train
     loss += reg * np.sum(W * W)
 
-    ################# Градиент ################
-
-    X_vector = np.zeros(margins.shape) # строка х столбец = класс х объект
-
-    X_vector[margins > 0] = 1 # считаем неправильные классы
-
-    incorrect_counts = np.sum(X_vector, axis=1) # сумма стобцов каждой строки, колличество неправильных классов с margin>0
-
-    X_vector[np.arange(num_train), y] = -incorrect_counts # для каждого образца записываем -кол-во неправильных классов
-
-    dW = X.T.dot(X_vector) # матрица градиента
-
-    dW /= num_train
-    dW += reg*W
-    """
-    for i in range(num_train): # для каждоой выборки
-        scores = X[i].dot(W) # скор размером 10 х 1 за каждый класс
-        correct_class_score = scores[y[i]] # запишем настоящий класс текущего объекта выборки
-
-        margins = np.maximum(0, scores - correct_class_score + delta)
-        margins[y[i]] = 0
-
-        loss = np.sum(margins)
-
-        loss /= num_train
-        loss += reg * np.sum(W * W)
-        """
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     #############################################################################
@@ -189,8 +160,19 @@ def svm_loss_vectorized(W, X, y, reg):
     использовали для вычисления потерь.
     """
     #############################################################################
-    # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+# *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    X_vector = np.zeros(margins.shape) # строка х столбец = класс х объект
 
-    # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    X_vector[margins > 0] = 1 # считаем неправильные классы
+
+    incorrect_counts = np.sum(X_vector, axis=1) # сумма стобцов каждой строки, колличество неправильных классов с margin>0
+
+    X_vector[np.arange(num_train), y] = -incorrect_counts # для каждого образца записываем -кол-во неправильных классов
+
+    dW = X.T.dot(X_vector) # матрица градиента
+
+    dW /= num_train
+    dW += reg*W
+# *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     return loss, dW
